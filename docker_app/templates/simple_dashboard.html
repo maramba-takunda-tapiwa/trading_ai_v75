@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>V3 Money Printer Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .badge {
+            display: inline-block;
+            background: #38ef7d;
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .strategies {
+            margin: 30px 0;
+        }
+        .strategy-card {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .strategy-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .strategy-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        .refresh-time {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 V3 MONEY PRINTER 🚀</h1>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <span class="badge">LIVE & MONITORING</span>
+        </div>
+
+        <div id="dashboard-content" class="loading">
+            Loading dashboard data...
+        </div>
+
+        <div class="refresh-time" id="refresh-time">
+            Last updated: --
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                
+                // Build dashboard HTML
+                let html = '<div class="stats-grid">';
+                
+                // Main stats
+                html += `
+                    <div class="stat-card">
+                        <div class="stat-label">Current Balance</div>
+                        <div class="stat-value">$500</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Trades</div>
+                        <div class="stat-value">${data.total_trades || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value">${data.win_rate || 0}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ROI</div>
+                        <div class="stat-value">${data.roi || 0}%</div>
+                    </div>
+                `;
+                html += '</div>';
+                
+                // V3 Data
+                if (data.v3_data) {
+                    html += '<div class="strategies"><h2 style="text-align:center;">Active Strategies</h2>';
+                    
+                    const strategies = ['EUR/USD Breakout', 'GBP/USD Breakout', 'USD/JPY Trend'];
+                    strategies.forEach(strategy => {
+                        const stratData = data.v3_data.strategies?.[strategy] || {};
+                        html += `
+                            <div class="strategy-card">
+                                <div class="strategy-header">${strategy}</div>
+                                <div class="strategy-stats">
+                                    <div>
+                                        <div style="font-size:0.9em;opacity:0.8;">Trades</div>
+                                        <div style="font-size:1.3em;font-weight:bold;">${stratData.trades || 0}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.9em;opacity:0.8;">Win Rate</div>
+                                        <div style="font-size:1.3em;font-weight:bold;">${stratData.win_rate || 0}%</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.9em;opacity:0.8;">Profit</div>
+                                        <div style="font-size:1.3em;font-weight:bold;">$${stratData.profit || 0}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                // Monitor status
+                if (data.v3_monitor) {
+                    html += '<div style="margin-top:30px;background:rgba(255,255,255,0.15);padding:20px;border-radius:10px;">';
+                    html += '<h3 style="text-align:center;margin-bottom:15px;">🛡️ Kill Switches Status</h3>';
+                    html += `<div style="text-align:center;font-size:1.2em;">Trading: ${data.v3_monitor.trading_enabled ? '<span style="color:#38ef7d;">✅ ENABLED</span>' : '<span style="color:#ff6b6b;">❌ DISABLED</span>'}</div>`;
+                    html += '</div>';
+                }
+                
+                document.getElementById('dashboard-content').innerHTML = html;
+                document.getElementById('refresh-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                
+            } catch (error) {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div style="text-align:center;color:#ff6b6b;">
+                        <h2>❌ Error loading dashboard</h2>
+                        <p>${error.message}</p>
+                        <p>Make sure V3 trader is running!</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load on page load
+        loadDashboard();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadDashboard, 5000);
+    </script>
+</body>
+</html>

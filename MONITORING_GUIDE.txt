@@ -1,0 +1,255 @@
+================================================================================
+WHERE TO MONITOR - LIVE DEMO DEPLOYMENT
+================================================================================
+
+DEPLOYMENT STARTED: November 1, 2025, 18:20:41 UTC
+EXPECTED END: November 4, 2025, 18:20:41 UTC (48-72 hours)
+STATUS: MONITORING
+
+================================================================================
+THREE KEY FILES TO WATCH
+================================================================================
+
+1. LIVE TRADES LOG (MOST IMPORTANT)
+   File: results/live_trades_log_v2.csv
+   
+   What to check:
+   - New trades appearing hourly
+   - Current equity (should start at $10,000)
+   - Win rate building (target: 12-15%)
+   - Profit factor (target: 1.8-2.2)
+   - Max drawdown (target: < $2,500)
+   
+   How to view:
+   - Open in Excel: results\live_trades_log_v2.csv
+   - Or in terminal: type results\live_trades_log_v2.csv
+   
+   Frequency: Check DAILY (at least once per day)
+
+2. TRADER STATE FILE (REAL-TIME STATUS)
+   File: results/trader_state_v2.json
+   
+   What to check:
+   - Current position state
+   - Recovery mode status (countdown if active)
+   - Soft stop status (equity freeze if triggered)
+   - Last trade time
+   
+   How to view:
+   - Open in Excel: results\trader_state_v2.json
+   - Or in terminal: type results\trader_state_v2.json
+   
+   Frequency: Check every 6-12 hours
+
+3. DEPLOYMENT STATUS FILE (OVERALL PROGRESS)
+   File: results/deployment_status.json
+   
+   What to check:
+   - Overall deployment status
+   - Current phase (should be: MONITORING)
+   - Expected completion date
+   - Tasks completed
+   
+   How to view:
+   - Open in text editor: results\deployment_status.json
+   - Command: type results\deployment_status.json
+   
+   Frequency: Check once per 24 hours
+
+================================================================================
+CRITICAL ALERTS TO WATCH
+================================================================================
+
+RED FLAGS (STOP and investigate immediately):
+
+1. MAX DRAWDOWN EXCEEDED: $3,000
+   - Hard stop triggered
+   - No new trades should be placed
+   - Review trades for issues
+   
+2. DAILY LOSS FREEZE: $600
+   - Daily losses exceed $600
+   - Trading frozen for rest of day
+   - Equity should hold stable
+   
+3. SOFT STOP (Equity below $8,500)
+   - 15% below peak equity
+   - No NEW entries allowed
+   - Exit-only mode active
+   - Watch for recovery
+
+4. EQUITY DROPS SIGNIFICANTLY
+   - More than 5% daily loss (> $500)
+   - Indicates possible data issue
+   - Check if trader is running
+
+YELLOW FLAGS (Monitor closely):
+
+1. No trades for 24+ hours
+   - Possible data feed issue
+   - Check trader process
+   
+2. Win rate < 10%
+   - Below expected 12-15%
+   - May need reoptimization
+   
+3. Profit factor < 1.5
+   - Below expected 1.8-2.2
+   - Strategy underperforming
+
+GREEN FLAGS (Good signs):
+
+1. Steady equity growth
+   - $50-200 per profitable day
+   - Consistent with backtest
+   
+2. Win rate 12-15%
+   - On target
+   - Validates backtest
+   
+3. Profit factor 1.8-2.2
+   - Excellent performance
+   - Better than backtest possible
+   
+4. Max DD staying < $2,500
+   - Risk management working
+   - Adaptive sizing effective
+
+================================================================================
+QUICK MONITORING COMMANDS
+================================================================================
+
+Check deployment status:
+   cd c:\Users\maram\trading_ai_v75
+   py deploy_complete.py --status
+
+View live trades (last 50 lines):
+   type results\live_trades_log_v2.csv | Select-Object -Last 50
+
+View trader state:
+   type results\trader_state_v2.json
+
+Count total trades so far:
+   type results\live_trades_log_v2.csv | Measure-Object -Line
+
+Get current equity (last line):
+   (Get-Content results\live_trades_log_v2.csv)[-1]
+
+================================================================================
+WHAT TO EXPECT EACH DAY
+================================================================================
+
+DAILY PATTERN (EUR/USD hourly):
+- 2-5 trades per day
+- Some days no trades (no valid breakouts)
+- Equity should show slow, steady growth
+- Max DD should stay below $2,500
+
+WEEKLY PATTERN (48-72 hours):
+- By hour 24: 5-10 trades total
+- By hour 48: 10-20 trades total
+- By hour 72: 15-30 trades total
+- Enough data to validate metrics
+
+SIGNAL OF SUCCESS:
+- Win rate: 12-15% (NOT 50%+)
+- Profit factor: 1.8-2.2
+- Max DD: $2,000-2,500
+- Equity: Steady growth above $10,000
+
+================================================================================
+DECISION TIMELINE
+================================================================================
+
+NOW - 24 hours:
+- Monitor for first trades
+- Check data is flowing
+- Verify no hard stops triggered
+
+24 - 48 hours:
+- Analyze first 5-10 trades
+- Check for pattern matching backtest
+- Early win rate should be 10-15%
+
+48 - 72 hours:
+- Collect complete demo data
+- Run final analysis
+- Calculate official metrics
+
+DECISION (After 72 hours):
+- Compare actual vs backtest
+- Scenario 1: Metrics match → Go LIVE (0.01 lot)
+- Scenario 2: Metrics miss slightly → Run more demo
+- Scenario 3: Metrics bad → HALT and reoptimize
+
+================================================================================
+MOST IMPORTANT: CHECK DAILY
+================================================================================
+
+1. Open: results/live_trades_log_v2.csv
+2. Scroll to bottom
+3. Look for NEW trades today
+4. Check equity is growing or stable (NOT declining > 5%)
+5. If all looks good, check back tomorrow
+
+If NO new trades in 24 hours:
+- Possible issue with data feed or trader process
+- Check trader is still running
+- Review trader logs in backtests/
+
+If equity DOWN more than $500:
+- Unusual - not expected
+- Review individual trade details
+- May indicate system issue
+
+If MAX DD > $2,500 or DAILY LOSS > $600:
+- Hard stop triggered
+- Trading halted
+- Investigate what happened
+
+================================================================================
+AFTER 72 HOURS: NEXT COMMAND
+================================================================================
+
+Once demo period ends (approximately November 4, 2025):
+
+py analyze_demo_results.py
+
+This will:
+1. Compare actual metrics to backtest predictions
+2. Generate final report
+3. Make recommendation: LIVE or ITERATE
+4. Show next steps
+
+If ALL metrics good:
+   py live_trader_saxo_v2.py --live --lot 0.01
+
+This deploys to LIVE with micro lot (0.01).
+
+================================================================================
+QUICK REFERENCE: KEY THRESHOLDS
+================================================================================
+
+METRIC              TARGET      WARNING    CRITICAL
+====================================================
+Win Rate            12-15%      <10%       <5%
+Profit Factor       1.8-2.2     <1.5       <1.0
+Max Drawdown        <$2,500     >$2,500    >$3,000 (STOP)
+Daily Loss          OK          >$400      >$600 (FREEZE)
+Equity Soft Stop    Hold        <$8,500    <$8,500 (FREEZE)
+Current Equity      Growing     Stable     Declining >5%
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+Status check: py deploy_complete.py --status
+View trades: type results\live_trades_log_v2.csv
+View state: type results\trader_state_v2.json
+Expected end: November 4, 18:20 UTC (3 days from deployment)
+
+You're monitoring a LIVE EUR/USD breakout strategy on Saxo demo.
+V2 has 7 components for risk management.
+Watch for 48-72 hours, then decide: live or iterate?
+
+Go check your trades!

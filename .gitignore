@@ -1,0 +1,60 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data and results (large, generated)
+data/
+results/
+backtests/*.csv
+backtests/*.json
+
+# Secrets and credentials (DO NOT COMMIT)
+*.key
+*.pem
+*.cer
+*.crt
+*.pfx
+*.p12
+*.enc
+*.secret
+*.secrets
+*.token
+*.tokens
+.env
+.env.*
+APP_ID_VS_KEY.txt
+SAXO_CREDENTIALS_SETUP.txt
+
+# Docker/runtime misc
+docker_app/public/*.map
+docker_app/public/*.log
+docker_app/.env
+docker_app/.env.*
+
+# Jupyter
+.ipynb_checkpoints/

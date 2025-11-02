@@ -1,0 +1,478 @@
+# THE ACTUAL CODE: How Trades Get Entered
+
+This document shows you the EXACT Python code from `breakout_strategy_v2.py` that decides when to take a trade.
+
+---
+
+## Step 1: The Signal Calculation (Lines 56-92)
+
+This is where ALL 4 FILTERS happen:
+
+```python
+def compute_signals(self):
+    """Compute technical indicators and entry signals."""
+    df = self.data.copy()
+    
+    # --- ATR (True Range) ---
+    prev_close = df['close'].shift(1)
+    tr1 = df['high'] - df['low']
+    tr2 = (df['high'] - prev_close).abs()
+    tr3 = (df['low'] - prev_close).abs()
+    df['TR'] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    atr_period = 14
+    df['ATR'] = df['TR'].ewm(alpha=1/atr_period, adjust=False, min_periods=atr_period).mean()
+    
+    # --- Breakout Levels (FILTER 3) ---
+    N = self.breakout_length  # = 25 bars (tighter than original 30)
+    df['prev_high'] = df['high'].shift(1).rolling(window=N, min_periods=N).max()
+    df['prev_low'] = df['low'].shift(1).rolling(window=N, min_periods=N).min()
+    
+    breakout_up = df['high'] > df['prev_high']     # LONGS: High breaks above 25-bar high
+    breakout_down = df['low'] < df['prev_low']     # SHORTS: Low breaks below 25-bar low
+    
+    # --- Volatility Filter (FILTER 2) ---
+    if self.volatility_filter:
+        df['ATR_slow'] = df['ATR'].rolling(window=14, min_periods=14).mean()
+        vol_cond = df['ATR'] > df['ATR_slow']      # Current ATR > average ATR
+    else:
+        vol_cond = pd.Series(True, index=df.index)
+    
+    # --- TREND FILTER (FILTER 1) - 200-bar MA ---
+    if self.trend_filter:
+        df['MA200'] = df['close'].rolling(window=200, min_periods=200).mean()
+        long_bias = df['close'] > df['MA200']       # Bullish: price above 200-bar MA
+        short_bias = df['close'] < df['MA200']      # Bearish: price below 200-bar MA
+    else:
+        long_bias = pd.Series(True, index=df.index)
+        short_bias = pd.Series(True, index=df.index)
+    
+    # --- Combine ALL conditions (ALL MUST BE TRUE!) ---
+    df['long_signal'] = breakout_up & vol_cond & long_bias
+    df['short_signal'] = breakout_down & vol_cond & short_bias
+    
+    self.data = df
+```
+
+**What this does:**
+1. Calculates ATR (volatility measure)
+2. Finds 25-bar high/low (breakout levels)
+3. Checks if volatility is expanding (ATR > avg ATR)
+4. Checks if price is above 200-bar MA for longs / below for shorts
+5. Combines all: `long_signal = breakout & vol_ok & trend_ok`
+6. When `long_signal = True`, we can enter
+
+---
+
+## Step 2: Position Sizing Based on Streak (Lines 94-130)
+
+Before taking a trade, the system checks: "Should we reduce size?"
+
+```python
+def compute_position_size_multiplier(self):
+    """
+    Dynamic position sizing based on streak.
+    - Winning streak: 1.0x (normal)
+    - 1 loss: 0.8x (slightly reduced)
+    - 2+ losses: 0.5x (recovery mode)
+    """
+    if not self.dynamic_sizing:
+        return 1.0
+    
+    # Check if we're still in recovery countdown
+    if self.recovery_countdown > 0:
+        self.recovery_countdown -= 1
+        return 0.5  # Stay reduced for next 5 trades
+    
+    # Count consecutive losses from most recent trade
+    if len(self.trade_streak) == 0:
+        return 1.0  # No previous trades
+    
+    losses = 0
+    for outcome in reversed(self.trade_streak):  # Start from latest trade
+        if not outcome:  # outcome = False means LOSS
+            losses += 1
+        else:  # outcome = True means WIN
+            break  # Stop counting (streak is over)
+    
+    # Apply multiplier based on loss count
+    if losses == 0:
+        return 1.0  # Winning streak: full size
+    elif losses == 1:
+        return 0.8  # 1 loss: scale to 80%
+    else:  # 2+ losses
+        self.recovery_countdown = 5  # Stay reduced for next 5 trades
+        return 0.5  # Recovery mode: 50% size
+```
+
+**How it works:**
+```
+Last 5 trades: WIN, WIN, WIN, LOSS, LOSS
+Streak check: Starting from LOSS
+  • 1st iteration: outcome = LOSS (losses = 1)
+  • 2nd iteration: outcome = LOSS (losses = 2) 
+  • 3rd iteration: outcome = WIN (break!)
+Result: losses = 2 → Return 0.5 (recovery mode for 5 trades)
+
+Next 5 trades are at 0.5x size regardless of win/loss
+After 5 trades: recovery_countdown resets, back to normal sizing
+```
+
+---
+
+## Step 3: The Entry Logic (Lines 193-235)
+
+This is where the decision happens - "TAKE THIS TRADE NOW":
+
+```python
+if not in_position:  # Only if not already in a trade
+    # Check for LONG entry signal
+    if row.get('long_signal'):
+        position_type = 'Long'
+        entry_price = row['prev_high']  # ← ENTRY AT 25-BAR HIGH!
+        stop_loss_price = entry_price - self.atr_stop_multiplier * row['ATR']  # -0.3x ATR
+        target_price = entry_price + self.atr_tp_multiplier * row['ATR']       # +4.0x ATR
+        entry_time = df.index[idx]
+        in_position = True
+        position_size_mult = self.compute_position_size_multiplier()  # ← Check streak
+        
+    # Check for SHORT entry signal
+    elif row.get('short_signal'):
+        position_type = 'Short'
+        entry_price = row['prev_low']   # ← ENTRY AT 25-BAR LOW!
+        stop_loss_price = entry_price + self.atr_stop_multiplier * row['ATR']  # +0.3x ATR
+        target_price = entry_price - self.atr_tp_multiplier * row['ATR']       # -4.0x ATR
+        entry_time = df.index[idx]
+        in_position = True
+        position_size_mult = self.compute_position_size_multiplier()  # ← Check streak
+```
+
+**Breakdown of LONG entry:**
+
+```
+IF long_signal == True:
+  ✓ Price above 200-bar MA (bullish)
+  ✓ ATR > ATR_slow (expanding volatility)
+  ✓ High > 25-bar high (breakout happened)
+  
+THEN:
+  Entry = exactly at the 25-bar high
+  Stop = Entry - (0.3 × ATR)        # Tight stop, 30% of volatility below entry
+  Target = Entry + (4.0 × ATR)      # Bigger target, 4x volatility above entry
+  Position size = 1.0x OR 0.8x OR 0.5x (depends on streak)
+  Time = current bar time
+  Status = in_position = True (now monitoring this trade)
+```
+
+---
+
+## Step 4: The Exit Logic (Lines 236-310)
+
+Once in a trade, the system monitors every single candle for exit conditions:
+
+### LONG Exit Monitoring:
+
+```python
+elif position_type == 'Long':
+    stop_hit = row['low'] <= stop_loss_price      # Price touched stop
+    target_hit = row['high'] >= target_price      # Price touched target
+    
+    # --- Case 1: BOTH hit in same bar ---
+    if stop_hit and target_hit:
+        # Which is closer? (which hit first in reality?)
+        dist_to_stop = abs(entry_price - stop_loss_price)
+        dist_to_target = abs(target_price - entry_price)
+        # Pick whichever was closer (hit first)
+        exit_price = target_price if dist_to_target <= dist_to_stop else stop_loss_price
+        exit_reason = 'TP' if dist_to_target <= dist_to_stop else 'SL'
+    
+    # --- Case 2: Only stop hit ---
+    elif stop_hit:
+        exit_price = stop_loss_price
+        exit_reason = 'SL'
+    
+    # --- Case 3: Only target hit ---
+    elif target_hit:
+        exit_price = target_price
+        exit_reason = 'TP'
+    
+    # --- Case 4: Neither hit yet ---
+    else:
+        continue  # Skip this bar, keep monitoring
+    
+    # --- CALCULATE TRADE RESULT ---
+    exit_time = df.index[idx]
+    profit = exit_price - entry_price              # $ profit/loss
+    risk = entry_price - stop_loss_price           # $ amount risked
+    R = profit / risk if risk != 0 else 0          # Profit in "R" units
+    
+    # Apply position size multiplier (0.5x means only half the profit)
+    adjusted_profit = profit * position_size_mult
+    balance += adjusted_profit                     # Update account balance
+    peak_balance = max(peak_balance, balance)      # Track new peak
+    
+    # Record for streak tracking
+    self.trade_streak.append(R > 0)  # True if win, False if loss
+    
+    # Log this trade
+    trades_list.append({
+        'entry_time': entry_time,
+        'exit_time': exit_time,
+        'side': 'Long',
+        'entry_price': entry_price,
+        'exit_price': exit_price,
+        'exit_reason': exit_reason,  # 'TP' or 'SL' or 'EQUITY_STOP'
+        'R': R,
+        'size_mult': position_size_mult
+    })
+    
+    in_position = False      # Trade is closed
+    position_type = None
+    equity_curve_list.append({'time': exit_time, 'equity': balance})
+```
+
+**SHORT exit is identical logic but reversed:**
+- Stop = Entry + (0.3 × ATR) [above entry]
+- Target = Entry - (4.0 × ATR) [below entry]
+- Profit = Entry - Exit [short profits when price goes down]
+
+---
+
+## Real Example: Walking Through the Code
+
+Let's trace a complete trade execution:
+
+### Market Data (EUR/USD hourly):
+```
+Time: 2025-11-02 14:00
+
+Bar data:
+  open=1.0945, high=1.0950, low=1.0940, close=1.0948
+  
+Previous calculated values:
+  MA200=1.0920, ATR=0.0050, ATR_slow=0.0048
+  prev_high(25-bar)=1.0948, prev_low(25-bar)=1.0905
+
+Recent trades: WIN, WIN, LOSS (so position_size_mult will be 0.8x)
+Current equity: $10,100
+```
+
+### Step 1: Signal Calculation
+```python
+# Line 80: breakout_up = df['high'] > df['prev_high']
+breakout_up = 1.0950 > 1.0948  # TRUE (high breaks above 25-bar high!)
+
+# Line 84: vol_cond = df['ATR'] > df['ATR_slow']
+vol_cond = 0.0050 > 0.0048  # TRUE (volatility expanding!)
+
+# Line 91: long_bias = df['close'] > df['MA200']
+long_bias = 1.0948 > 1.0920  # TRUE (price above 200-bar MA!)
+
+# Line 93: df['long_signal'] = breakout_up & vol_cond & long_bias
+long_signal = TRUE & TRUE & TRUE  # ✅ SIGNAL FIRES!
+```
+
+### Step 2: Check Position Size
+```python
+# Line 205: position_size_mult = self.compute_position_size_multiplier()
+# Recent trades: [WIN, WIN, LOSS]
+# Count losses from end: LOSS (1) → WIN (break!)
+# losses = 1 → return 0.8  # Because of 1 consecutive loss
+position_size_mult = 0.8
+```
+
+### Step 3: Enter Trade
+```python
+# Line 204-206: Entry setup
+entry_price = row['prev_high']  # = 1.0948
+stop_loss_price = 1.0948 - (0.3 × 0.0050)  # = 1.0948 - 0.0015 = 1.0933
+target_price = 1.0948 + (4.0 × 0.0050)     # = 1.0948 + 0.0200 = 1.1148
+
+in_position = True
+position_type = 'Long'
+entry_time = 2025-11-02 14:00
+
+# Status: LONG TRADE ENTERED AT 1.0948, MONITORING...
+```
+
+### Step 4: Monitor Next Bars
+
+**Bar 1 (15:00):** high=1.0960, low=1.0945
+```python
+# Line 237: stop_hit = row['low'] <= 1.0933
+stop_hit = 1.0945 <= 1.0933  # FALSE (stop not hit)
+
+# Line 238: target_hit = row['high'] >= 1.1148
+target_hit = 1.0960 >= 1.1148  # FALSE (target not hit)
+
+# Line 246: No hits → continue monitoring
+# OUTPUT: Still in trade...
+```
+
+**Bar 2 (16:00):** high=1.1150, low=1.1000
+```python
+# Line 237: stop_hit = row['low'] <= 1.0933
+stop_hit = 1.1000 <= 1.0933  # FALSE (stop not hit)
+
+# Line 238: target_hit = row['high'] >= 1.1148
+target_hit = 1.1150 >= 1.1148  # TRUE ✅ TARGET HIT!
+
+# Line 243: exit_price = 1.1148
+exit_price = 1.1148
+exit_reason = 'TP'
+
+# Line 247-248: Calculate profit
+profit = 1.1148 - 1.0948  # = 0.0200 = +200 pips
+risk = 1.0948 - 1.0933   # = 0.0015 = 15 pips
+R = 0.0200 / 0.0015      # = 13.3 (HUGE WIN!)
+
+# Line 251: Apply position multiplier
+adjusted_profit = 0.0200 × 0.8  # = 0.0160
+balance = 10,100 + 0.0160 = 10,100.016  # ← Account grows
+
+# Line 256: Log trade
+{
+  'entry_time': 2025-11-02 14:00,
+  'exit_time': 2025-11-02 16:00,
+  'side': 'Long',
+  'entry_price': 1.0948,
+  'exit_price': 1.1148,
+  'exit_reason': 'TP',
+  'R': 13.3,
+  'size_mult': 0.8
+}
+
+# Line 262-263: Trade streak
+trade_streak.append(True)  # R > 0 = WIN
+# New streak: [WIN, WIN, LOSS, WIN]
+
+# Status: POSITION CLOSED, READY FOR NEXT SIGNAL
+```
+
+### Dashboard Display (from docker_app/Dashboard.jsx):
+```json
+{
+  "Time": "2025-11-02 16:00",
+  "Entry": 1.0948,
+  "Exit": 1.1148,
+  "R": 13.3,
+  "P&L": "+$32",
+  "Outcome": "WIN TP",
+  "Equity": 10132
+}
+```
+
+---
+
+## The Complete Flow: From Signal to Exit
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ STEP 1: SIGNAL CALCULATION (compute_signals)                  │
+├─────────────────────────────────────────────────────────────────┤
+│ ✓ breakout_up = High > 25-bar high                            │
+│ ✓ vol_cond = ATR > ATR_slow                                   │
+│ ✓ long_bias = Price > 200-bar MA                              │
+│ ✓ long_signal = breakout_up & vol_cond & long_bias            │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+                    long_signal = TRUE?
+                      /          \
+                   YES             NO
+                   │               │
+                   ▼               ▼
+        ┌──────────────────┐   WAIT for next bar
+        │ STEP 2: SIZING  │
+        │ (compute_pos...) │
+        └──────────────────┘
+                   │
+                   ▼
+        ┌──────────────────────┐
+        │ STEP 3: ENTRY        │
+        │ entry = prev_high    │
+        │ stop = entry - 0.3xA │
+        │ tgt = entry + 4.0xA  │
+        │ size_mult = 0.8x/1x  │
+        │ in_position = True   │
+        └──────────────────────┘
+                   │
+                   ▼ (EACH NEW BAR)
+        ┌──────────────────────┐
+        │ STEP 4: MONITOR      │
+        │ stop_hit? target_hit? │
+        │ equity_stop?         │
+        └──────────────────────┘
+                   │
+        ┌──────────┼──────────┬────────────┐
+        │          │          │            │
+      STOP        TARGET    EQUITY     NEITHER
+      ▼            ▼        ▼             ▼
+   Exit SL      Exit TP    Exit ES     Continue
+   Loss        Win         Loss        Monitor
+   Streak→     Streak→    Streak→     (repeat)
+   record      record     record
+
+```
+
+---
+
+## Key Code Findings
+
+### 1. Entry Prices are EXACT
+```python
+entry_price = row['prev_high']  # For longs
+entry_price = row['prev_low']   # For shorts
+```
+NOT at current close, NOT at market price - at the exact breakout level.
+
+### 2. Stops are TIGHT (0.3x ATR)
+```python
+stop_loss_price = entry_price - self.atr_stop_multiplier * row['ATR']
+# atr_stop_multiplier = 0.3
+```
+This was REDUCED from 0.5x (original) to 0.3x (V2).
+
+### 3. Targets are GENEROUS (4.0x ATR)
+```python
+target_price = entry_price + self.atr_tp_multiplier * row['ATR']
+# atr_tp_multiplier = 4.0
+```
+This creates asymmetric risk/reward: 1:4+ ratio.
+
+### 4. Position Sizing is DYNAMIC
+```python
+position_size_mult = self.compute_position_size_multiplier()
+# Returns: 1.0x, 0.8x, or 0.5x based on streak
+adjusted_profit = profit * position_size_mult
+```
+The profit is scaled by 0.5-1.0 to protect after losses.
+
+### 5. The 4 Filters MUST ALL BE TRUE
+```python
+df['long_signal'] = breakout_up & vol_cond & long_bias
+#                    BREAKOUT   & VOL OK   & TREND OK
+# If ANY is False, signal = False, no trade
+```
+This is why the system doesn't over-trade.
+
+---
+
+## When the Dashboard Shows a Trade
+
+Every time you see a row in the Trades table, it's because:
+
+1. ✓ A new hourly candle closed
+2. ✓ All 4 filters were met
+3. ✓ `compute_position_size_multiplier()` determined sizing
+4. ✓ Entry was placed at exact prev_high or prev_low
+5. ✓ System monitored candle-by-candle
+6. ✓ One of 3 exits fired:
+   - Stop loss hit: loss recorded, streak tracks
+   - Target hit: win recorded, streak tracks
+   - Equity stop: emergency exit, shutdown
+
+The entire process is **100% mechanical** - no human discretion, no emotions, no second-guessing.
+
+Just data → calculations → entry/exit → result logged.
+
+**That's exactly how the code works.**

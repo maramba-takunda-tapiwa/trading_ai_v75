@@ -1,0 +1,185 @@
+# TROUBLESHOOTING: No Activity After Saving Credentials
+
+The system is DEPLOYED but you're not seeing any trade activity. Here's what to check:
+
+## Quick Check List
+
+### 1. ✅ Credentials ARE Saved
+Your credentials file exists at:
+- `c:\Users\maram\trading_ai_v75\results\saxo_config.json`
+
+Contents verified - your 3 credentials are there.
+
+### 2. ⏳ Give It More Time
+- **First 30-60 seconds**: Trader is connecting to Saxo and downloading market data
+- **After 1-2 minutes**: Should start seeing trade opportunities on hourly candles
+- **Expected first trade**: Within 2-4 hours (depends on entry signals)
+
+### 3. ❌ Possible Issues & Solutions
+
+#### Issue A: Credentials May Be Invalid
+**Symptom**: No trades after 5+ minutes, no errors visible
+
+**Solution**:
+1. Go to Saxo Developer Portal
+2. Verify your App ID, Access Token, Account ID are correct
+3. Check if Access Token has expired (usually 24-hour expiration)
+4. Get a new Access Token if needed
+5. Go to Settings tab → Update credentials
+6. Click Deploy again
+
+**How to get fresh credentials:**
+```
+1. Login: https://www.developers.saxo/openapi/
+2. Apps → Your App → Copy App ID
+3. Authorization → Get new Access Token
+4. Save your demo Account ID (from Saxo login page)
+```
+
+#### Issue B: Access Token Expired
+**Symptom**: Trader starts but no actual trades execute
+
+**Solution**:
+1. Get a new Access Token from Saxo
+2. Update Settings → Access Token field
+3. Click "Save Credentials"
+4. Go to Overview → Click "Stop" first
+5. Wait 5 seconds
+6. Click "Deploy" again
+
+#### Issue C: Demo Account Insufficient Balance
+**Symptom**: Credentials are valid but no trades
+
+**Solution**:
+1. Login to your Saxo demo account
+2. Check account balance (should be > $10,000)
+3. If < $10,000, deposit more
+4. Try deployment again
+
+#### Issue D: Wrong Account ID
+**Symptom**: Trader runs but errors about account not found
+
+**Solution**:
+1. Login to https://app.saxo/
+2. Go to Account → Account Information
+3. Look for Account Number or Account ID
+4. Make sure it's your DEMO account, not live
+5. Update Settings with correct ID
+
+#### Issue E: API Connectivity Issue
+**Symptom**: Trader process keeps crashing
+
+**Solution**:
+1. Check Docker logs: `docker-compose logs --tail=50`
+2. Look for error messages about saxophone connection
+3. Restart container:
+   ```
+   docker-compose down
+   docker-compose up -d
+   ```
+
+---
+
+## What SHOULD Happen
+
+### Timeline:
+```
+T+0 min     : You click Deploy
+T+0-1 min   : Trader initializes, connects to Saxo
+T+1-2 min   : Starts downloading hourly price data
+T+2-5 min   : Evaluating entry signals (waiting for hourly candle close)
+T+5-120 min : First trade may appear IF signals aligned
+```
+
+### Files That Should Exist:
+After successful deployment, these files should appear:
+- ✅ `live_trades_log_v2.csv` - All trades logged here
+- ✅ `trader_state_v2.json` - Current trader status
+- ✅ `saxo_config.json` - Your credentials (you just created this)
+
+### What You'll See On Dashboard:
+- Trades table starts populating
+- Equity curve line starts moving
+- Metrics update (win rate, profit factor, etc)
+- Alerts appear if limits triggered
+
+---
+
+## Advanced Troubleshooting
+
+### View Docker Container Logs:
+```powershell
+docker-compose logs --tail=100 | Find "ERROR"
+```
+
+### Restart Everything:
+```powershell
+# Stop container
+docker-compose down
+
+# Wait a few seconds
+Start-Sleep -Seconds 3
+
+# Restart
+docker-compose up -d
+
+# Check it's running
+docker-compose ps
+```
+
+### Manual Deployment Cycle:
+```powershell
+# 1. Stop trader
+Invoke-WebRequest -Uri "http://localhost/api/stop" -Method POST
+
+# 2. Wait
+Start-Sleep -Seconds 3
+
+# 3. Redeploy
+Invoke-WebRequest -Uri "http://localhost/api/deploy" -Method POST
+
+# 4. Wait and refresh dashboard
+Start-Sleep -Seconds 10
+
+# Then open http://localhost in browser
+```
+
+---
+
+## Next Step
+
+1. **Try Again**: Wait another 5 minutes and refresh the dashboard
+2. **Check Credentials**: If still nothing, verify each credential field exactly matches Saxo
+3. **Get Fresh Token**: If credentials look right, try a new Access Token
+4. **Contact Support**: If still stuck, the issue is likely credentials/account balance
+
+---
+
+## Common Questions
+
+**Q: Why no trades yet?**
+A: Either (1) still initializing, (2) invalid credentials, or (3) waiting for entry signal.
+
+**Q: How do I know if it's actually running?**
+A: Open http://localhost → Go to Overview → Look for "DEPLOYED" status and timestamps.
+
+**Q: What if I see "STOPPED" status?**
+A: Click Deploy again to restart the trader.
+
+**Q: The access token is long and complex - did I copy it right?**
+A: Yes, copy the ENTIRE token exactly as Saxo shows it. Even 1 character wrong breaks it.
+
+**Q: It still says it's loading after 10 minutes...**
+A: Stop and restart the container: `docker-compose down; docker-compose up -d`
+
+---
+
+## Success Indicators
+
+✅ Status shows "DEPLOYED"  
+✅ Deployment time is recent (last few minutes)  
+✅ Trades table HAS at least 1 row  
+✅ Equity chart shows a line  
+✅ Metrics show non-zero values  
+
+If you see all 5 of these, the system is working correctly!

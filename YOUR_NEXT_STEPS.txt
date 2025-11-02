@@ -1,0 +1,206 @@
+# YOUR NEXT 3 STEPS
+
+## The System is Ready. Here's What You Do Now.
+
+---
+
+## STEP 1: Open Dashboard (30 seconds)
+
+### In Your Browser:
+```
+http://localhost
+```
+
+You should see:
+- Header: "Trading AI V2 Dashboard"
+- 4 tabs: Overview | Trades | Charts | Settings
+- Big green "Deploy" button
+- Metrics cards showing:
+  - Deployment Status: NOT_DEPLOYED
+  - Current Equity: $10,000
+  - Max Drawdown: $0
+  - Win Rate: 0%
+
+✅ If you see this, move to Step 2.
+
+---
+
+## STEP 2: Add Your Saxo Credentials (1-2 minutes)
+
+### Click "Settings" Tab
+
+You should see two sections:
+- Left: "Deployment Configuration" (read-only)
+- Right: "Saxo Bank Credentials" (form)
+
+### Fill In Your Credentials
+
+Enter these fields:
+- **App ID:** Your Saxo application ID
+- **Access Token:** Your Saxo bearer token (long string starting with "eyJ...")
+- **Account ID:** Your Saxo account ID (usually numeric)
+
+### Save
+
+Click the big **"Save Credentials"** button.
+
+Wait for the green checkmark: **"✅ Credentials saved successfully!"**
+
+✅ If you see the green message, move to Step 3.
+
+**❌ If you see an error:**
+- Check that all 3 fields are filled
+- Make sure tokens are copied correctly (no extra spaces)
+- Try again
+
+---
+
+## STEP 3: Deploy (1-2 minutes)
+
+### Go Back to Overview Tab
+
+Click the **"Overview"** tab at the top.
+
+### Click Deploy
+
+Find the big green **"Deploy"** button in the "Controls" section.
+
+Click it.
+
+### Confirm Dialog
+
+A dialog appears asking:
+*"Start demo deployment on Saxo account? This will run for 48-72 hours..."*
+
+Click **"Deploy"** to confirm.
+
+### Wait
+
+The dashboard will:
+1. Show "DEPLOYING..." for a moment
+2. Change to **"Deployment Status: DEPLOYED"**
+3. Start updating metrics every 5 seconds
+
+✅ If you see "DEPLOYED", you're live! Move to Step 4.
+
+---
+
+## STEP 4: Watch It Trade (Automatic)
+
+### What Happens Next (Automatic, No Action Needed)
+
+1. **Trader launches** in background
+2. **Connects to Saxo** demo account
+3. **Downloads data** (EUR/USD hourly)
+4. **Analyzes market** looking for breakouts
+5. **Executes trades** when conditions met
+6. **Logs each trade** to CSV
+7. **Updates dashboard** in real-time
+
+### Where to Look
+
+**Trades Tab:**
+- First trade usually appears within 30-120 minutes
+- You'll see columns: Time, Entry, Exit, R, P&L, Outcome, Equity
+
+**Charts Tab:**
+- Equity curve shows as line
+- Updates after each trade closes
+
+**Overview Tab:**
+- Metrics update every 5 seconds
+- Watch: Win Rate, Max DD, Profit Factor
+
+### What to Expect (72 Hours)
+
+- **Hour 1:** Trader analyzing, possibly waiting for setup
+- **Hour 4:** Usually 1-2 trades
+- **Hour 12:** Usually 5-10 trades
+- **Hour 24:** Usually 10-20 trades
+- **Hour 72:** Usually 15-30 trades total, validate strategy
+
+---
+
+## That's It!
+
+### The Process:
+```
+1. Open http://localhost                    ← 30 seconds
+2. Go to Settings, add credentials         ← 1-2 minutes
+3. Click Deploy                            ← 30 seconds
+4. Watch dashboard auto-update             ← 72 hours (automatic)
+```
+
+### Total Setup Time: **~3 minutes**
+
+---
+
+## What If...
+
+### "I don't have Saxo credentials yet"
+- Go to https://www.saxobank.com/
+- Sign up for demo account
+- Get your App ID and Token
+- Then come back and add them
+
+### "Trades aren't appearing after 1 hour"
+- Check "Alerts" at top of dashboard (red warnings)
+- Check Settings - are credentials still saved?
+- Try clicking "Refresh" button
+- Check logs: `docker-compose logs trading-ai`
+
+### "I want to stop it"
+- Click the **"Stop"** button (red, in Controls)
+- Or in terminal: `docker-compose down`
+
+### "I want to restart"
+- Click **"Deploy"** again
+- Or in terminal: `docker-compose up -d`
+
+### "Everything seems broken"
+- Restart Docker:
+  ```powershell
+  docker-compose down
+  docker-compose up -d
+  ```
+- Wait 5 seconds
+- Reload http://localhost
+
+---
+
+## Success Looks Like
+
+After Step 3 (Deploy):
+
+```
+✓ Status shows "DEPLOYED"
+✓ Metrics are live (not all zeros)
+✓ No errors at top
+✓ Can see the dashboard
+```
+
+After Step 4 (Watch for 1 hour):
+
+```
+✓ At least 1 trade appeared in Trades tab
+✓ Equity updated (shows new balance)
+✓ Charts tab shows a line
+✓ Win rate calculating
+```
+
+---
+
+## YOU'RE READY!
+
+Go to **http://localhost** now and follow these 3 steps.
+
+The system will handle everything else automatically.
+
+**Good luck! 🚀**
+
+---
+
+**Questions?**
+- Check: `docker-compose logs trading-ai`
+- Restart: `docker-compose down; docker-compose up -d`
+- Support: Open the dashboard and check Alerts tab

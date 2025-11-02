@@ -1,0 +1,216 @@
+# 🚀 QUICK START - 5 MINUTES TO LIVE TRADING
+
+## RIGHT NOW: 3 Steps
+
+### Step 1: Open Dashboard (30 seconds)
+```
+Browser: http://localhost
+```
+Should see the Trading AI V2 dashboard with 4 tabs.
+
+### Step 2: Add Credentials (2 minutes)
+1. Click **"Settings"** tab
+2. Paste your Saxo credentials:
+   - App ID: `[your-app-id]`
+   - Access Token: `[your-bearer-token]`
+   - Account ID: `[your-account-id]`
+3. Click **"Save Credentials"**
+4. See green checkmark: ✅ Credentials saved successfully!
+
+### Step 3: Deploy (1 minute)
+1. Click **"Overview"** tab
+2. Click big green **"Deploy"** button
+3. Click **"Deploy"** in the confirmation dialog
+4. Wait 3-5 seconds
+5. Status changes to **"DEPLOYED"**
+6. Metrics start updating
+
+---
+
+## What Happens Next (Automatic)
+
+✅ Trader connects to Saxo  
+✅ Starts analyzing EUR/USD hourly data  
+✅ Executes trades on breakouts  
+✅ Updates dashboard in real-time  
+✅ Writes trades to CSV  
+✅ Calculates metrics automatically  
+
+---
+
+## Where to Look
+
+| What | Where | Update Frequency |
+|------|-------|------------------|
+| Status | Overview tab | Real-time |
+| Trades | Trades tab | Every 5 sec |
+| Equity Curve | Charts tab | Every 5 sec |
+| Win Rate | Metrics card | Every 5 sec |
+| Alerts | Top of dashboard | Real-time |
+
+---
+
+## First Trade Timeline
+
+- **0-5 minutes:** Trader connecting, downloading data
+- **5-30 minutes:** Analyzing market, waiting for breakout
+- **30-120 minutes:** First trade likely to execute
+- **After:** Check Trades tab to see it
+- **4 hours:** Usually 2-5 trades
+- **24 hours:** Usually 10-20 trades
+- **72 hours:** Full validation complete
+
+---
+
+## If Something Doesn't Appear
+
+### Dashboard doesn't load
+```powershell
+# Restart everything
+docker-compose down
+docker-compose up -d
+# Then: http://localhost
+```
+
+### Credentials won't save
+```powershell
+# Check logs
+docker-compose logs trading-ai
+# Look for error messages
+```
+
+### Trades not appearing after 1 hour
+1. Check Settings tab - are credentials still there?
+2. Check Alerts - any errors?
+3. Check logs: `docker-compose logs trading-ai`
+4. Try clicking "Refresh" button
+
+### Deploy button not working
+1. Check browser console (F12)
+2. Check API: `Invoke-WebRequest http://localhost/api/health`
+3. Check logs: `docker-compose logs trading-ai`
+
+---
+
+## Success Looks Like
+
+After Deploy:
+```
+Overview Tab:
+  ✓ Deployment Status: DEPLOYED
+  ✓ Current Equity: $10,000 (or updated)
+  ✓ Max DD: $0 (then increases as trades happen)
+  ✓ Win Rate: 0% (then shows % after trades)
+
+Trades Tab:
+  ✓ Trade appears (usually within 30-60 min)
+  ✓ Shows: Time, Entry, Exit, R, P&L, Equity
+
+Charts Tab:
+  ✓ Equity line shows
+  ✓ Line updates as trades close
+
+No Alerts:
+  ✓ No RED alerts at top
+  ✓ System running smoothly
+```
+
+---
+
+## Stop Anytime
+
+### Option 1: Dashboard (Graceful)
+- Click **"Stop"** button (red, bottom)
+- Status changes to "STOPPED"
+- Trader shuts down cleanly
+
+### Option 2: Terminal (Force)
+```powershell
+docker-compose down
+# Restart anytime with:
+docker-compose up -d
+```
+
+---
+
+## Expected Performance (72 Hours)
+
+| Metric | Target | Actual |
+|--------|--------|--------|
+| Trades | 15-30 | ⏳ TBD |
+| Win Rate | 12-15% | ⏳ TBD |
+| Profit Factor | 1.8-2.2 | ⏳ TBD |
+| Max DD | < $2,500 | ⏳ TBD |
+| P&L | +$300-600 | ⏳ TBD |
+
+---
+
+## After 72 Hours
+
+1. **Export Results**
+   - Click "Export" button
+   - Save CSV file
+   - Open in Excel
+
+2. **Review**
+   - Did metrics match expectations?
+   - Any alerts triggered?
+   - Performance acceptable?
+
+3. **Decide**
+   - ✅ Good → Go LIVE (0.01 lot)
+   - ❌ Bad → Debug and re-test
+   - ⏳ Unclear → Run another 72 hours
+
+---
+
+## Questions?
+
+### "Why no trades yet?"
+- Market might not have breakout
+- Check that trader is running (logs)
+- EUR/USD breakouts vary by market conditions
+- Usually first trade within 1-4 hours
+
+### "Is it using real money?"
+- NO - Demo account only
+- Paper trading to validate strategy
+- Use results to decide on LIVE
+
+### "Can I deploy multiple times?"
+- Yes, but only 1 at a time
+- Click Stop first, then Deploy again
+- Resets and starts fresh
+
+### "What if it crashes?"
+- Docker has restart policy
+- Container auto-restarts
+- Trader will resume (state is saved)
+- Check logs to see what happened
+
+### "Can I change settings?"
+- Strategy parameters: Not easily (code change)
+- Risk limits: Update in code then rebuild
+- Credentials: Yes, Settings tab
+
+---
+
+## That's It!
+
+You now have a **professional automated trading system** running.
+
+**Next action:**
+1. Open http://localhost
+2. Go to Settings
+3. Add your credentials
+4. Click Deploy
+5. Watch it trade! 📈
+
+---
+
+**Questions? Check the logs:**
+```powershell
+docker-compose logs -f trading-ai
+```
+
+**Good luck! 🚀**

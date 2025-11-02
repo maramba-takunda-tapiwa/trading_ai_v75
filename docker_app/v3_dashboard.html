@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V3 Money Printer Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header h1 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-value.positive {
+            color: #38ef7d;
+        }
+        .metric-value.negative {
+            color: #f56565;
+        }
+        .strategies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .strategy-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .strategy-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .strategy-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat {
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 50px;
+        }
+        .error {
+            background: #f56565;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Trading AI V3 Dashboard</h1>
+            <span class="badge">V3 MONEY PRINTER LIVE</span>
+            <p style="margin-top: 10px; color: #666;">Multi-Strategy Portfolio: EUR/USD • GBP/USD • USD/JPY</p>
+        </div>
+
+        <div id="error-container"></div>
+        <div id="loading" class="loading">Loading V3 data...</div>
+        <div id="dashboard" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000/api';
+
+        async function fetchDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                renderDashboard(data);
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        ❌ Error loading dashboard: ${error.message}
+                        <br><br>Make sure the Flask server is running: py docker_app/app.py
+                    </div>
+                `;
+            }
+        }
+
+        function renderDashboard(data) {
+            const v3Data = data.v3_data || {};
+            const v3Enabled = v3Data.enabled || false;
+            const metrics = v3Enabled ? v3Data.portfolio_metrics : data.trades.metrics;
+            const strategies = v3Data.strategies || {};
+
+            let html = '';
+
+            // Portfolio Metrics
+            html += '<div class="metrics-grid">';
+            html += `
+                <div class="metric-card">
+                    <div class="metric-label">Current Capital</div>
+                    <div class="metric-value positive">$${metrics.current_capital?.toFixed(2) || '500.00'}</div>
+                    <div style="font-size: 0.9em; color: #38ef7d; margin-top: 5px;">
+                        ROI: ${metrics.roi?.toFixed(1) || '0'}%
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Value</div>
+                    <div class="metric-value positive">$${metrics.total_value?.toFixed(2) || '500.00'}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        $${metrics.total_withdrawn?.toFixed(2) || '0.00'} withdrawn
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Win Rate</div>
+                    <div class="metric-value ${metrics.win_rate >= 70 ? 'positive' : ''}">${metrics.win_rate?.toFixed(1) || '0'}%</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        ${metrics.wins || 0} wins / ${metrics.losses || 0} losses
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Trades</div>
+                    <div class="metric-value">${metrics.total_trades || 0}</div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        Sharpe: ${metrics.sharpe_ratio?.toFixed(2) || 'N/A'}
+                    </div>
+                </div>
+            `;
+            html += '</div>';
+
+            // Strategy Breakdown
+            if (v3Enabled && Object.keys(strategies).length > 0) {
+                html += '<div class="strategies-grid">';
+                for (const [strategyName, strategyData] of Object.entries(strategies)) {
+                    html += `
+                        <div class="strategy-card">
+                            <h3>${strategyName}</h3>
+                            <div class="strategy-stats">
+                                <div class="stat">
+                                    <div class="stat-label">Trades</div>
+                                    <div class="stat-value">${strategyData.trades}</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-label">Win Rate</div>
+                                    <div class="stat-value" style="color: ${strategyData.win_rate >= 70 ? '#38ef7d' : '#f56565'}">
+                                        ${strategyData.win_rate}%
+                                    </div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-label">Wins</div>
+                                    <div class="stat-value">${strategyData.wins}</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-label">Profit</div>
+                                    <div class="stat-value" style="color: ${strategyData.profit >= 0 ? '#38ef7d' : '#f56565'}">
+                                        $${strategyData.profit}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+            }
+
+            document.getElementById('dashboard').innerHTML = html;
+        }
+
+        // Initial load
+        fetchDashboard();
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchDashboard, 5000);
+    </script>
+</body>
+</html>

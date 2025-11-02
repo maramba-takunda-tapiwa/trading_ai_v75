@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Marr's Fx Machine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .nav-bar {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid rgba(102, 166, 255, 0.3);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .nav-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+        }
+        
+        .nav-logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            list-style: none;
+        }
+        
+        .nav-item {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: rgba(102, 166, 255, 0.2);
+            border-color: #66a6ff;
+            transform: translateY(-2px);
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, #66a6ff, #89f7fe);
+            color: #000;
+            font-weight: 700;
+            border-color: transparent;
+        }
+        
+        .content-wrapper {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.85em;
+            backdrop-filter: blur(10px);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            color: #fff;
+            border-bottom: 2px solid #66a6ff;
+            padding-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.2);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: clamp(1.6em, 3vw, 2.6em);
+            font-weight: 700;
+            color: #fff;
+            word-break: break-word;
+        }
+        
+        .stat-value.positive {
+            color: #29ffc6;
+        }
+        
+        .stat-value.negative {
+            color: #ff5e57;
+        }
+        
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .strategy-card {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #66a6ff;
+        }
+        
+        .strategy-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+        
+        .strategy-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .strategy-stat {
+            text-align: center;
+        }
+        
+        .strategy-stat-label {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .strategy-stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .pair-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .pair-status-card {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #66a6ff;
+        }
+        
+        .pair-status-card.trending {
+            border-left-color: #29ffc6;
+        }
+        
+        .pair-status-card.ranging {
+            border-left-color: #ff5e57;
+        }
+        
+        .pair-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .pair-regime {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .pair-regime.trending {
+            background: rgba(41, 255, 198, 0.2);
+            color: #29ffc6;
+        }
+        
+        .pair-regime.ranging {
+            background: rgba(255, 94, 87, 0.2);
+            color: #ff5e57;
+        }
+        
+        .pair-info {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        
+        .kill-switch {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .kill-switch.active {
+            border-left: 4px solid #29ffc6;
+        }
+        
+        .kill-switch.triggered {
+            border-left: 4px solid #ff5e57;
+        }
+        
+        .status-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+        }
+        
+        .status-indicator.green {
+            background: #29ffc6;
+            box-shadow: 0 0 12px #29ffc6;
+        }
+        
+        .status-indicator.red {
+            background: #ff5e57;
+            box-shadow: 0 0 12px #ff5e57;
+        }
+        
+        .refresh-time {
+            text-align: center;
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        
+        .signal-card {
+            background: linear-gradient(145deg, rgba(102, 166, 255, 0.1), rgba(102, 166, 255, 0.05));
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(102, 166, 255, 0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .signal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        
+        .signal-card.high-quality {
+            border-image: linear-gradient(to right, #29ffc6, #20e3b2) 1;
+        }
+        
+        .signal-card.medium-quality {
+            border-image: linear-gradient(to right, #f5af19, #f12711) 1;
+        }
+        
+        .signal-card.low-quality {
+            border-image: linear-gradient(to right, #ff5e57, #c81919) 1;
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .signal-pair {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .signal-badge {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1em;
+            background: rgba(0,0,0,0.3);
+            border: none;
+        }
+        
+        .signal-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .signal-detail {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .signal-detail-label {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .signal-detail-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .signal-detail-value.positive {
+            color: #29ffc6;
+        }
+        
+        .signal-detail-value.negative {
+            color: #ff5e57;
+        }
+        
+        .quality-factors {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .quality-factors-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e0e0e0;
+        }
+        
+        .quality-factor {
+            padding: 5px 0;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .no-signals {
+            text-align: center;
+            padding: 60px;
+            color: #aaa;
+            font-size: 1.2em;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #fff;
+            font-size: 1.5em;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <div class="nav-logo">Marr's Fx Machine</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchPage('dashboard')">📊 Dashboard</li>
+                <li class="nav-item" onclick="switchPage('pairs')">💹 Pair Status</li>
+                <li class="nav-item" onclick="switchPage('signals')">🎯 Live Signals</li>
+                <li class="nav-item" onclick="switchPage('monitor')">🛡️ System Monitor</li>
+            </ul>
+            <div>
+                <span class="badge" id="status-badge">MONITORING</span>
+            </div>
+        </div>
+    </nav>
+    <!-- Debug Panel -->
+    <div id="debug" style="max-width:1600px;margin:10px auto 0 auto;padding:8px 12px;color:#ccc;font-size:12px;opacity:0.8">
+        Debug: waiting for first fetch…
+    </div>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="page-section active">
+            <div id="dashboard-content" class="loading pulse">
+                Loading Dashboard...
+            </div>
+        </div>
+
+        <!-- Pair Status Page -->
+        <div id="page-pairs" class="page-section">
+            <div id="pairs-content" class="loading pulse">
+                Loading Pair Status...
+            </div>
+        </div>
+
+        <!-- Signals Page -->
+        <div id="page-signals" class="page-section">
+            <div id="signals-content" class="loading pulse">
+                Loading Signals...
+            </div>
+        </div>
+
+        <!-- Monitor Page -->
+        <div id="page-monitor" class="page-section">
+            <div id="monitor-content" class="loading pulse">
+                Loading System Monitor...
+            </div>
+        </div>
+
+        <div class="refresh-time" id="refresh-time">
+            Last updated: --
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 'dashboard';
+        let dashboardData = null;
+        
+        function switchPage(page) {
+            // Update current page
+            currentPage = page;
+            
+            // Hide all sections
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`page-${page}`).classList.add('active');
+            
+            // Update nav menu (do not rely on global event)
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const targetNav = Array.from(document.querySelectorAll('.nav-item')).find(item => {
+                const onclick = item.getAttribute('onclick') || '';
+                return onclick.includes(`switchPage('${page}'`);
+            });
+            if (targetNav) targetNav.classList.add('active');
+            
+            // Render the page if data is available
+            if (dashboardData) {
+                renderPage(page);
+            }
+        }
+        
+        function renderPage(page) {
+            if (!dashboardData) return;
+            
+            switch(page) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'pairs':
+                    renderPairStatus();
+                    break;
+                case 'signals':
+                    renderSignals();
+                    break;
+                case 'monitor':
+                    renderMonitor();
+                    break;
+            }
+        }
+        
+        function renderDashboard() {
+            const data = dashboardData;
+            let html = '<div class="dashboard-grid">';
+            
+            html += `
+                <div class="section">
+                    <div class="section-title">Key Performance Indicators</div>
+                    <div class="stats-grid">
+                        ${createStatCard('Balance', `$${(data.trader_state?.balance || 0).toFixed(2)}`, 'stat-value')}
+                        ${createStatCard('Total Trades', data.v3_data?.portfolio_metrics?.total_trades || 0, 'stat-value')}
+                        ${createStatCard('Win Rate', `${(data.v3_data?.portfolio_metrics?.win_rate || 0).toFixed(1)}%`, 
+                            (data.v3_data?.portfolio_metrics?.win_rate || 0) >= 50 ? 'stat-value positive' : 'stat-value negative')}
+                        ${createStatCard('Sharpe Ratio', (data.v3_monitor?.sharpe_ratio || 0).toFixed(2), 
+                            (data.v3_monitor?.sharpe_ratio || 0) > 1 ? 'stat-value positive' : 'stat-value')}
+                        ${createStatCard('Drawdown', `${(data.v3_monitor?.current_drawdown || 0).toFixed(2)}%`, 'stat-value negative')}
+                    </div>
+                </div>
+            `;
+            
+            html += `
+                <div class="section">
+                    <div class="section-title">Quick Stats</div>
+                    <div class="stats-grid">
+                        ${createStatCard('Active Signals', (data.v3_signals?.signals?.length || 0), 'stat-value positive')}
+                        ${createStatCard('Profit Factor', (data.v3_data?.portfolio_metrics?.profit_factor || 0).toFixed(2), 'stat-value')}
+                        ${createStatCard('Max Drawdown', `${(data.v3_data?.portfolio_metrics?.max_drawdown || 0).toFixed(1)}%`, 'stat-value negative')}
+                    </div>
+                </div>
+            `;
+            
+            html += `
+                <div class="section" style="grid-column: span 2;">
+                    <div class="section-title">📊 Active Strategies</div>
+                    ${createStrategiesSection(data.v3_data)}
+                </div>
+            `;
+            
+            html += '</div>';
+            document.getElementById('dashboard-content').innerHTML = html;
+        }
+        
+        function renderPairStatus() {
+            const data = dashboardData;
+            let html = '<div class="section">';
+            html += '<div class="section-title">💹 Currency Pair Status</div>';
+            html += '<div class="pair-status-grid">';
+            
+            // Define the pairs we're monitoring
+            const pairs = [
+                { name: 'EUR/USD', code: 'EURUSD', strategy: 'Breakout' },
+                { name: 'GBP/USD', code: 'GBPUSD', strategy: 'Breakout' },
+                { name: 'USD/JPY', code: 'USDJPY', strategy: 'Trend Following' }
+            ];
+            
+            // Get regime info from signals if available
+            const signalRegimes = {};
+            if (data.v3_signals?.signals) {
+                data.v3_signals.signals.forEach(signal => {
+                    // Handle both formats: "GBPUSD" and "GBP/USD"
+                    const pairCode = signal.pair.replace('/', '');
+                    signalRegimes[pairCode] = signal.regime;
+                });
+            }
+            
+            pairs.forEach(pair => {
+                const regime = signalRegimes[pair.code] || signalRegimes[pair.name] || 'UNKNOWN';
+                const regimeClass = regime.toLowerCase();
+                const hasSignal = data.v3_signals?.signals?.some(s => 
+                    s.pair === pair.name || s.pair === pair.code
+                );
+                
+                html += `
+                    <div class="pair-status-card ${regimeClass}">
+                        <div class="pair-name">${pair.name}</div>
+                        <div class="pair-regime ${regimeClass}">${regime}</div>
+                        <div class="pair-info">
+                            <div>Strategy: ${pair.strategy}</div>
+                            <div>Status: ${hasSignal ? '✅ Signal Active' : '⏳ Monitoring'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            document.getElementById('pairs-content').innerHTML = html;
+        }
+        
+        function renderSignals() {
+            const data = dashboardData;
+            let html = '<div class="section">';
+            html += '<div class="section-title">🎯 Live Trading Signals</div>';
+            
+            if (data.v3_signals && data.v3_signals.signals && data.v3_signals.signals.length > 0) {
+                data.v3_signals.signals.forEach(signal => {
+                    html += createSignalCard(signal);
+                });
+                if (data.v3_signals.next_check) {
+                    html += `<div style="text-align: center; margin-top: 20px; color: #aaa;">
+                        Next signal check: ${new Date(data.v3_signals.next_check).toLocaleTimeString()}
+                    </div>`;
+                }
+            } else {
+                html += '<div class="no-signals">✋ No active signals. The machine is hunting...</div>';
+                if (data.v3_signals?.last_check) {
+                    html += `<div style="text-align: center; color: #999; margin-top: 10px;">
+                        Last checked: ${new Date(data.v3_signals.last_check).toLocaleString()}
+                    </div>`;
+                }
+            }
+            
+            html += '</div>';
+            document.getElementById('signals-content').innerHTML = html;
+        }
+        
+        function renderMonitor() {
+            const data = dashboardData;
+            let html = '<div class="dashboard-grid">';
+            
+            html += `
+                <div class="section">
+                    <div class="section-title">🛡️ System Monitor</div>
+                    ${createMonitorSection(data.v3_monitor)}
+                </div>
+            `;
+            
+            html += `
+                <div class="section">
+                    <div class="section-title">⚙️ System Info</div>
+                    <div class="stats-grid">
+                        ${createStatCard('Trading Enabled', data.v3_monitor?.trading_enabled !== false ? 'YES' : 'NO', 
+                            data.v3_monitor?.trading_enabled !== false ? 'stat-value positive' : 'stat-value negative')}
+                        ${createStatCard('Last Update', new Date().toLocaleTimeString(), 'stat-value')}
+                    </div>
+                </div>
+            `;
+            
+            html += '</div>';
+            document.getElementById('monitor-content').innerHTML = html;
+        }
+        
+        function setDebug(msg) {
+            const el = document.getElementById('debug');
+            if (el) el.textContent = `Debug: ${msg}`;
+        }
+
+        const API_BASE = (() => {
+            const origin = window.location.origin || '';
+            // On some Windows setups, localhost may resolve to IPv6 (::1) and hit Docker's listener instead of local python.
+            // Force IPv4 loopback to ensure we hit the same server as the page when served from 127.0.0.1.
+            return origin.replace('localhost', '127.0.0.1');
+        })();
+
+        async function fetchV3SignalsDirect() {
+            try {
+                const r = await fetch(`${API_BASE}/api/v3/signals?t=${Date.now()}`, { cache: 'no-store' });
+                const j = await r.json();
+                return { ok: true, status: r.status, data: j };
+            } catch (e) {
+                return { ok: false, error: e };
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/dashboard?t=${new Date().getTime()}`, { cache: 'no-store' });
+        const data = await response.json();
+                dashboardData = data;
+        const sigCount = (data?.v3_signals?.signals || []).length;
+        const totalSig = (data?.v3_signals?.total_signals);
+        const v3Keys = data?.v3_signals ? Object.keys(data.v3_signals).join(',') : 'none';
+                setDebug(`fetched ok @ ${new Date().toLocaleTimeString()} | status=${response.status} | total=${totalSig} | signals=${sigCount} | keys=[${v3Keys}]`);
+        window.__lastDashboard = data; // quick inspect helper
+
+                // Always prefer the direct signals endpoint for consistency
+                try {
+                    const direct = await fetchV3SignalsDirect();
+                    if (direct.ok && direct.data) {
+                        const dsig = Array.isArray(direct.data.signals) ? direct.data.signals.length : 0;
+                        setDebug(`signals source: direct @ ${new Date().toLocaleTimeString()} | status=${direct.status} | signals=${dsig}`);
+                        dashboardData.v3_signals = direct.data;
+                    } else {
+                        setDebug(`signals source fallback failed: ${direct.error?.message || direct.status}`);
+                    }
+                } catch (e) {
+                    setDebug(`signals source error: ${e?.message || e}`);
+                }
+                
+                // Update status badge
+                const enabled = data.v3_monitor?.trading_enabled !== false;
+                const statusBadge = document.getElementById('status-badge');
+                statusBadge.textContent = enabled ? 'ONLINE' : 'PAUSED';
+                statusBadge.style.background = enabled 
+                    ? 'linear-gradient(135deg, #29ffc6, #20e3b2)' 
+                    : 'linear-gradient(135deg, #ff5e57, #c81919)';
+                statusBadge.style.color = enabled ? '#000' : '#fff';
+                
+                // Render current page (guarded)
+                try {
+                    renderPage(currentPage);
+                } catch (e) {
+                    setDebug(`render error on '${currentPage}': ${e?.message || e}`);
+                }
+                
+                document.getElementById('refresh-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+            } catch (error) {
+                setDebug(`fetch error: ${error?.message || error}`);
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div style="text-align:center;color:white;padding:50px;">
+                        <h2>❌ Error Loading Dashboard</h2>
+                        <p>${error.message}</p>
+                        <p style="margin-top:20px;">Make sure the Flask server is running!</p>
+                        <button onclick="loadDashboard()" style="margin-top:20px;padding:10px 20px;font-size:1.1em;cursor:pointer;border:none;border-radius:5px;background:#66a6ff;color:white;">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Global error capture to surface any hidden JS errors
+        window.onerror = function(message, source, lineno, colno, error) {
+            setDebug(`window.onerror: ${message} @ ${source}:${lineno}:${colno}`);
+        };
+        window.addEventListener('unhandledrejection', function(ev){
+            setDebug(`unhandledrejection: ${ev.reason}`);
+        });
+
+        // Helper to dump last payload in console
+        window.dumpDashboard = function(){
+            console.log('Last dashboard payload:', window.__lastDashboard);
+            alert('Dashboard JSON dumped to console');
+        }
+
+        function createStatCard(label, value, valueClass) {
+            return `
+                <div class="stat-card">
+                    <div class="stat-label">${label}</div>
+                    <div class="${valueClass}">${value}</div>
+                </div>
+            `;
+        }
+
+        function createStrategiesSection(v3_data) {
+            let html = '<div class="strategy-grid">';
+            if (!v3_data || !v3_data.strategies) {
+                return '<p>No strategy data available.</p></div>';
+            }
+            const strategies = v3_data.strategies;
+            if (Object.keys(strategies).length === 0) {
+                return '<p style="text-align:center; color: #aaa;">No trades recorded yet to show strategy stats.</p></div>';
+            }
+            for (const [name, stats] of Object.entries(strategies)) {
+                html += `
+                    <div class="strategy-card">
+                        <div class="strategy-header">${name}</div>
+                        <div class="strategy-stats">
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-label">Trades</div>
+                                <div class="strategy-stat-value">${stats.trades || 0}</div>
+                            </div>
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-label">Win Rate</div>
+                                <div class="strategy-stat-value">${(stats.win_rate || 0).toFixed(0)}%</div>
+                            </div>
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-label">Profit</div>
+                                <div class="strategy-stat-value ${stats.profit >= 0 ? 'positive' : 'negative'}">$${(stats.profit || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function createMonitorSection(v3_monitor) {
+            if (!v3_monitor) return '<p>No monitor data available.</p>';
+            const enabled = v3_monitor.trading_enabled !== false;
+            let html = `
+                <div class="kill-switch ${enabled ? 'active' : 'triggered'}">
+                    <span><strong>Trading Status:</strong> ${enabled ? 'ENABLED' : 'DISABLED'}</span>
+                    <span class="status-indicator ${enabled ? 'green' : 'red'}"></span>
+                </div>
+                <div class="kill-switch active">
+                    <span><strong>KS 1:</strong> 3 Consecutive Loss Days</span>
+                    <span class="status-indicator green"></span>
+                </div>
+                <div class="kill-switch active">
+                    <span><strong>KS 2:</strong> 15% Max Drawdown</span>
+                    <span class="status-indicator green"></span>
+                </div>
+                <div class="kill-switch active">
+                    <span><strong>KS 3:</strong> Sharpe Ratio < 0.5</span>
+                    <span class="status-indicator green"></span>
+                </div>
+            `;
+            if (v3_monitor.shutdown_reason) {
+                html += `<div style="margin-top:15px;padding:10px;background:rgba(255,94,87,0.2);border-radius:5px;color:#ffcdd2;">
+                    <strong>Shutdown Reason:</strong> ${v3_monitor.shutdown_reason}
+                </div>`;
+            }
+            return html;
+        }
+
+        function createSignalCard(signal) {
+            const qualityLevel = (signal.quality_level || 'MEDIUM');
+            const qualityClass = qualityLevel.toLowerCase() + '-quality';
+            const side = signal.side || 'BUY';
+            const sideClass = side === 'BUY' ? 'positive' : 'negative';
+            const qColor = signal.quality_color || '#66a6ff';
+            const qBadge = signal.quality_badge || (qualityLevel === 'HIGH' ? '🔥 HIGH POTENTIAL' : (qualityLevel === 'LOW' ? '⚠️ LOW POTENTIAL' : '⚡ MEDIUM POTENTIAL'));
+            const factors = Array.isArray(signal.quality_factors) ? signal.quality_factors : [];
+            
+            return `
+                <div class="signal-card ${qualityClass}">
+                    <div class="signal-header">
+                        <div class="signal-pair">${signal.pair || 'N/A'}</div>
+                        <div class="signal-badge" style="color: ${qColor}; border: 1px solid ${qColor};">${qBadge}</div>
+                    </div>
+                    
+                    <div class="signal-details">
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Signal</div>
+                            <div class="signal-detail-value ${sideClass}">${side} @ ${(signal.entry_price || 0).toFixed(5)}</div>
+                        </div>
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Stop Loss</div>
+                            <div class="signal-detail-value negative">${(signal.stop_loss || 0).toFixed(5)}</div>
+                        </div>
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Take Profit</div>
+                            <div class="signal-detail-value positive">${(signal.take_profit || 0).toFixed(5)}</div>
+                        </div>
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Reward:Risk</div>
+                            <div class="signal-detail-value positive">${(signal.risk_reward_ratio || 0).toFixed(1)}:1</div>
+                        </div>
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Regime</div>
+                            <div class="signal-detail-value">${signal.regime || 'N/A'}</div>
+                        </div>
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">Quality Score</div>
+                            <div class="signal-detail-value">${(signal.quality_score || 0)}/100</div>
+                        </div>
+                    </div>
+                    
+                    <div class="quality-factors">
+                        <div class="quality-factors-title">Quality Analysis:</div>
+                        ${factors.map(factor => 
+                            `<div class="quality-factor">${factor}</div>`
+                        ).join('')}
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 10px; font-size: 0.9em; color: #aaa;">
+                        <strong>Strategy:</strong> ${signal.strategy || 'N/A'} | 
+                        <strong>Generated:</strong> ${signal.timestamp ? new Date(signal.timestamp).toLocaleString() : 'N/A'}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load on page load
+        loadDashboard();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadDashboard, 5000);
+    </script>
+</body>
+</html>

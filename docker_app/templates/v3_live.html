@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V3 Money Printer - Live Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-value.positive {
+            color: #38ef7d;
+        }
+        
+        .stat-value.negative {
+            color: #ff6b6b;
+        }
+        
+        .strategies-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .strategy-card {
+            background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #667eea20;
+        }
+        
+        .strategy-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .strategy-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .strategy-stat {
+            text-align: center;
+        }
+        
+        .strategy-stat-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .strategy-stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .monitor-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .kill-switch {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .kill-switch.active {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+        
+        .kill-switch.triggered {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+        
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-indicator.green {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+        
+        .status-indicator.red {
+            background: #dc3545;
+            box-shadow: 0 0 10px #dc3545;
+        }
+        
+        .refresh-time {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 V3 MONEY PRINTER 🚀</h1>
+            <div>
+                <span class="badge">LIVE TRADING</span>
+                <span class="badge" id="status-badge">MONITORING</span>
+            </div>
+        </div>
+
+        <div id="dashboard-content" class="loading pulse">
+            Loading V3 dashboard data...
+        </div>
+
+        <div class="refresh-time" id="refresh-time">
+            Last updated: --
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                
+                let html = '';
+                
+                // Main stats grid
+                html += '<div class="stats-grid">';
+                html += createStatCard('Balance', `$${data.current_balance || 500}`, 'stat-value');
+                html += createStatCard('Total Trades', data.total_trades || 0, 'stat-value');
+                html += createStatCard('Win Rate', `${(data.win_rate || 0).toFixed(1)}%`, 
+                    data.win_rate >= 70 ? 'stat-value positive' : 'stat-value');
+                html += createStatCard('ROI', `${(data.roi || 0).toFixed(1)}%`, 
+                    data.roi > 0 ? 'stat-value positive' : 'stat-value negative');
+                html += createStatCard('Sharpe Ratio', (data.sharpe || 0).toFixed(2), 'stat-value');
+                html += createStatCard('Max Drawdown', `$${Math.abs(data.max_drawdown || 0).toFixed(0)}`, 'stat-value negative');
+                html += '</div>';
+                
+                // Strategies section
+                if (data.v3_data) {
+                    html += '<div class="strategies-section">';
+                    html += '<div class="section-title">📊 Active Strategies</div>';
+                    html += '<div class="strategy-grid">';
+                    
+                    const strategies = {
+                        'EUR/USD Breakout': data.v3_data.strategies?.['EUR/USD Breakout'] || {},
+                        'GBP/USD Breakout': data.v3_data.strategies?.['GBP/USD Breakout'] || {},
+                        'USD/JPY Trend': data.v3_data.strategies?.['USD/JPY Trend'] || {}
+                    };
+                    
+                    for (const [name, stats] of Object.entries(strategies)) {
+                        html += `
+                            <div class="strategy-card">
+                                <div class="strategy-header">${name}</div>
+                                <div class="strategy-stats">
+                                    <div class="strategy-stat">
+                                        <div class="strategy-stat-label">Trades</div>
+                                        <div class="strategy-stat-value">${stats.trades || 0}</div>
+                                    </div>
+                                    <div class="strategy-stat">
+                                        <div class="strategy-stat-label">Win Rate</div>
+                                        <div class="strategy-stat-value">${(stats.win_rate || 0).toFixed(0)}%</div>
+                                    </div>
+                                    <div class="strategy-stat">
+                                        <div class="strategy-stat-label">Profit</div>
+                                        <div class="strategy-stat-value">$${(stats.profit || 0).toFixed(0)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    html += '</div></div>';
+                }
+                
+                // Monitor section
+                if (data.v3_monitor) {
+                    html += '<div class="monitor-section">';
+                    html += '<div class="section-title">🛡️ Kill Switches & Monitoring</div>';
+                    
+                    const enabled = data.v3_monitor.trading_enabled;
+                    html += `
+                        <div class="kill-switch ${enabled ? 'active' : 'triggered'}">
+                            <span><strong>Trading Status:</strong> ${enabled ? 'ENABLED ✅' : 'DISABLED ❌'}</span>
+                            <span class="status-indicator ${enabled ? 'green' : 'red'}"></span>
+                        </div>
+                        <div class="kill-switch active">
+                            <span><strong>Kill Switch 1:</strong> 3 Consecutive Loss Days</span>
+                            <span class="status-indicator green"></span>
+                        </div>
+                        <div class="kill-switch active">
+                            <span><strong>Kill Switch 2:</strong> 15% Max Drawdown</span>
+                            <span class="status-indicator green"></span>
+                        </div>
+                        <div class="kill-switch active">
+                            <span><strong>Kill Switch 3:</strong> Sharpe < 0.5</span>
+                            <span class="status-indicator green"></span>
+                        </div>
+                    `;
+                    
+                    if (data.v3_monitor.alerts && data.v3_monitor.alerts.length > 0) {
+                        html += '<div style="margin-top:20px;"><strong>Recent Alerts:</strong></div>';
+                        data.v3_monitor.alerts.slice(0, 5).forEach(alert => {
+                            html += `<div style="padding:10px;margin:5px 0;background:#fff3cd;border-radius:5px;">${alert}</div>`;
+                        });
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                document.getElementById('dashboard-content').innerHTML = html;
+                document.getElementById('refresh-time').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                document.getElementById('status-badge').textContent = enabled ? 'LIVE ✅' : 'PAUSED ⏸️';
+                document.getElementById('status-badge').style.background = enabled ? 
+                    'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 
+                    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                
+            } catch (error) {
+                document.getElementById('dashboard-content').innerHTML = `
+                    <div style="text-align:center;color:white;padding:50px;">
+                        <h2>❌ Error Loading Dashboard</h2>
+                        <p>${error.message}</p>
+                        <p style="margin-top:20px;">Make sure Flask server is running!</p>
+                        <button onclick="loadDashboard()" style="margin-top:20px;padding:10px 20px;font-size:1.1em;cursor:pointer;border:none;border-radius:5px;background:#38ef7d;color:white;">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function createStatCard(label, value, valueClass) {
+            return `
+                <div class="stat-card">
+                    <div class="stat-label">${label}</div>
+                    <div class="${valueClass}">${value}</div>
+                </div>
+            `;
+        }
+        
+        // Load on page load
+        loadDashboard();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadDashboard, 5000);
+    </script>
+</body>
+</html>
