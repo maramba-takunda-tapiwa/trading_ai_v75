@@ -25,11 +25,11 @@ except Exception:
 from breakout_strategy import BreakoutStrategy
 import pandas as pd  # Added import for pandas
 
-# Saxo API Credentials (from demo account)
-CLIENT_ID = 'd9377c5e6a0b4b9aa6e5c81995e95032'  # App Key
-CLIENT_SECRET = 'de1db69d02aa45aa8145b0734eb2077a'  # App Secret
-TOKEN = 'eyJhbGciOiJFUzI1NiIsIng1dCI6IjY3NEM0MjFEMzZEMUE1OUNFNjFBRTIzMjMyOTVFRTAyRTc3MDMzNTkifQ.eyJvYWEiOiIzMzMzMCIsImlzcyI6Im9hIiwiYWlkIjoiNzM1NyIsInVpZCI6IjYxbHRiYmpHcnF4ckpuWlRuWUhEdlE9PSIsImNpZCI6IjYxbHRiYmpHcnF4ckpuWlRuWUhEdlE9PSIsImlzYSI6IkZhbHNlIiwidGlkIjoiMTIzODMiLCJzaWQiOiJiMDZlMGMxYmNiZDQ0ZjRkODMxZjc1NGYzMDRjZGExZSIsImRnaSI6Ijg0IiwiZXhwIjoiMTc2MjAwMDczMCIsIm9hbCI6IjFGIiwiaWlkIjoiMmM5OTAzZGQ1MjZiNDJjNTY5NjAwOGRlMTkwNjM1NWYifQ.4nYWhvClPvimJL4Idl51GTC4sbfJ_ZJT1WMKRsaT-jQ4LhRi6zSJtllis_0o1qHufCazU8MvAXzoZ7HW4_YTVg'  # New sim token
-ACCOUNT_KEY = 'your_account_key_here'  # Still needed - check Saxo demo trading platform
+# Saxo API Credentials (never hardcode secrets; use env/config)
+CLIENT_ID = os.getenv('SAXO_APP_ID', '')  # App ID (public identifier)
+CLIENT_SECRET = os.getenv('SAXO_CLIENT_SECRET', '')  # Client secret
+TOKEN = os.getenv('SAXO_ACCESS_TOKEN', '')  # Bearer token
+ACCOUNT_KEY = os.getenv('SAXO_ACCOUNT_ID', '')  # Account key
 
 # Saxo API base URL for simulation
 BASE_URL = 'https://gateway.saxobank.com/sim/openapi'

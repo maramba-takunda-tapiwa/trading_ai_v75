@@ -18,7 +18,9 @@ from datetime import datetime
 from breakout_strategy import BreakoutStrategy
 
 # Configuration
-API_TOKEN = '3Y5d114rtGSXOK4'  # Provided demo token
+# Never hardcode tokens; read from environment or a local config file excluded by .gitignore
+import os
+API_TOKEN = os.getenv('DERIV_API_TOKEN', '')  # Set in environment
 APP_ID = 1089  # Deriv app ID
 SYMBOL = 'frxEURUSD'  # EUR/USD forex pair
 SIMULATION = True  # Simulate trades; set to False for real (use demo account first!)

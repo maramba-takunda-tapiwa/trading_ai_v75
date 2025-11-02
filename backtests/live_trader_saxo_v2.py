@@ -49,12 +49,12 @@ try:
         ACCOUNT_KEY = config.get('account_id', '')
     print(f"✅ Loaded credentials from {CONFIG_FILE_PATH}")
 except FileNotFoundError:
-    # Fallback to hardcoded for local testing
-    print(f"⚠️ Config file not found at {CONFIG_FILE_PATH}, using fallback credentials")
-    CLIENT_ID = 'd9377c5e6a0b4b9aa6e5c81995e95032'
-    CLIENT_SECRET = 'de1db69d02aa45aa8145b0734eb2077a'
-    TOKEN = 'eyJhbGciOiJFUzI1NiIsIng1dCI6IjY3NEM0MjFEMzZEMUE1OUNFNjFBRTIzMjMyOTVFRTAyRTc3MDMzNTkifQ.eyJvYWEiOiIzMzMzMCIsImlzcyI6Im9hIiwiYWlkIjoiNzM1NyIsInVpZCI6IjYxbHRiYmpHcnF4ckpuWlRuWUhEdlE9PSIsImNpZCI6IjYxbHRiYmpHcnF4ckpuWlRuWUhEdlE9PSIsImlzYSI6IkZhbHNlIiwidGlkIjoiMTIzODMiLCJzaWQiOiJiMDZlMGMxYmNiZDQ0ZjRkODMxZjc1NGYzMDRjZGExZSIsImRnaSI6Ijg0IiwiZXhwIjoiMTc2MjAwMDczMCIsIm9hbCI6IjFGIiwiaWlkIjoiMmM5OTAzZGQ1MjZiNDJjNTY5NjAwOGRlMTkwNjM1NWYifQ.4nYWhvClPvimJL4Idl51GTC4sbfJ_ZJT1WMKRsaT-jQ4LhRi6zSJtllis_0o1qHufCazU8MvAXzoZ7HW4_YTVg'
-    ACCOUNT_KEY = 'your_account_key_here'
+    # Fallback to environment variables for local testing (no hardcoded secrets)
+    print(f"⚠️ Config file not found at {CONFIG_FILE_PATH}, using environment variables")
+    CLIENT_ID = os.getenv('SAXO_APP_ID', '')
+    CLIENT_SECRET = os.getenv('SAXO_CLIENT_SECRET', '')
+    TOKEN = os.getenv('SAXO_ACCESS_TOKEN', '')
+    ACCOUNT_KEY = os.getenv('SAXO_ACCOUNT_ID', '')
 except Exception as e:
     print(f"❌ Error loading config: {e}")
     raise
